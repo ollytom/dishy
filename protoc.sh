@@ -7,7 +7,7 @@
 # By default it connects to the default Dishy address (see DefaultDishyAddr).
 # A different address can be specified as an argument. For example:
 #
-#	protoc.sh 172.19.248.42:9100
+#	protoc.sh 192.0.2.1:9200
 #
 # This can be useful if the device is only available through a tunnel or VPN.
 #
@@ -32,30 +32,48 @@ then
 fi
 grpcurl -plaintext -protoset-out device.protoset $addr describe SpaceX.API.Device.Device
 
-# The protoc command, without proto file arguments, to generate the Go code.
-# From https://grpc.io/docs/languages/go/quickstart/#regenerate-grpc-code
-# For a protobuf reference:
-# https://developers.google.com/protocol-buffers/docs/reference/go-generated
+# First compile the dependencies of the Device service
+deps="spacex/api/common/status/status.proto
+	spacex/api/common/protobuf/internal.proto
+	spacex/api/telemetron/public/common/time.proto
+	spacex/api/satellites/network/ut_disablement_codes.proto
+	spacex/api/common/protobuf/internal.proto"
 
-# Strip the spacex.com/api prefix so package imports can be resolved within our Go module.
+# Map the dependencies between protofiles to Go package import paths.
+# We need a clean import path with a different root (not the
+# automatically generated "spacex.com") so that packages in this module
+# can import each other.
+# https://developers.google.com/protocol-buffers/docs/reference/go-generated
+gomodule=`grep module go.mod | awk '{print $2}'`
+import_opt="
+	--go_opt Mspacex/api/common/status/status.proto=$gomodule/status
+	--go_opt Mspacex/api/common/protobuf/internal.proto=$gomodule/protobuf
+	--go-grpc_opt Mspacex/api/common/protobuf/internal.proto=$gomodule/protobuf
+	--go_opt Mspacex/api/satellites/network/ut_disablement_codes.proto=$gomodule/satellites
+	--go-grpc_opt Mspacex/api/satellites/network/ut_disablement_codes.proto=$gomodule/satellites
+	--go_opt Mspacex/api/telemetron/public/common/time.proto=$gomodule/telemetron
+	--go-grpc_opt Mspacex/api/telemetron/public/common/time.proto=$gomodule/telemetron"
+
+# Strip our module prefix when writing generated files to disk; we import packages from within this module.
 # https://developers.google.com/protocol-buffers/docs/reference/go-generated#invocation
-module_opt="--go_opt module=spacex.com/api --go-grpc_opt module=spacex.com/api"
+module_opt="--go_opt module=$gomodule --go-grpc_opt module=$gomodule"
 
 protoc --go_out . --go-grpc_out . --descriptor_set_in device.protoset \
-	$module_opt \
-	spacex/api/common/status/status.proto
+	$module_opt $import_opt \
+	$deps
 
-# Device proto files import status.proto, so set the corresponding Go
-# package import path for the status package we generated previously.
-gomodule=`grep module go.mod | awk '{print $2}'`
-import_opt="--go_opt Mspacex/api/common/status/status.proto=$gomodule/status"
 files="spacex/api/device/command.proto
 	spacex/api/device/common.proto
 	spacex/api/device/device.proto
 	spacex/api/device/dish.proto
+	spacex/api/device/dish_config.proto
 	spacex/api/device/transceiver.proto
 	spacex/api/device/wifi.proto
 	spacex/api/device/wifi_config.proto"
+
+# Strip the original spacex.com/api prefix so package imports are resolved from our Go module.
+module_opt="--go_opt module=spacex.com/api --go-grpc_opt module=spacex.com/api"
+
 protoc --go_out . --go-grpc_out . --descriptor_set_in device.protoset \
-	$module_opt $import_opt \
+	$import_opt $module_opt \
 	$files
