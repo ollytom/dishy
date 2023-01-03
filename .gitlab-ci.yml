@@ -1,0 +1,16 @@
+---
+stages:
+  - build
+
+build:
+  image: golang
+  stage: build
+  script:
+    - go test ./...
+    - mkdir -p package/dishy
+    - go build -o package/dishy/ ./cmd/dishy/
+    - go doc ./cmd/dishy > package/dishy/README
+    - cd package && tar cvz dishy/ > dishy.linux_amd64.tar.gz
+  artifacts:
+    paths:
+      - package/dishy.linux_amd64.tar.gz

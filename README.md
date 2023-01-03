@@ -1,5 +1,7 @@
 # dishy
 
+[![Go Documentation](https://godocs.io/olowe.co/dishy?status.svg)](https://godocs.io/olowe.co/dishy)
+
 Package dishy provides an interface to manage a Starlink Dishy device over the network.
 
 ## `dishy` command
