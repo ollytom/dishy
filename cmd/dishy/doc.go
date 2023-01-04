@@ -11,6 +11,10 @@ The following commands are understood:
 		Reposition dish in a vertical orientation for easier transport.
 	unstow
 		Reposition the dish in the orientation prior to unstowing.
+	stat
+		Print short device status and diagnostics.
+	metrics
+		Print device statistics in OpenMetrics/Prometheus format.
 
 The flag -a specifies the address to connect to dishy.
 By default this is the default IPv4 address and port that dishy listens on 192.168.100.1:9200.

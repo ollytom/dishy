@@ -2,6 +2,7 @@ package dishy
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	"google.golang.org/grpc"
@@ -67,6 +68,71 @@ func (c *Client) Reboot() error {
 	}
 	_, err := c.do(req)
 	return err
+}
+
+func (c *Client) Status() (*device.DishGetStatusResponse, error) {
+	req := &device.Request{
+		Request: &device.Request_GetStatus{
+			GetStatus: &device.GetStatusRequest{},
+		},
+	}
+	resp, err := c.do(req)
+	return resp.GetDishGetStatus(), err
+}
+
+func (c *Client) Interfaces() ([]device.NetworkInterface, error) {
+	req := &device.Request{
+		Request: &device.Request_GetNetworkInterfaces{
+			GetNetworkInterfaces: &device.GetNetworkInterfacesRequest{},
+		},
+	}
+	resp, err := c.do(req)
+	if err != nil {
+		return nil, err
+	}
+	if resp.GetGetNetworkInterfaces() == nil {
+		return nil, fmt.Errorf("no interfaces in response")
+	}
+	var ifaces []device.NetworkInterface
+	for _, iface := range resp.GetGetNetworkInterfaces().NetworkInterfaces {
+		if iface == nil {
+			continue
+		}
+		ifaces = append(ifaces, *iface)
+	}
+	return ifaces, nil
+}
+
+func (c *Client) TransceiverTelemetry() (*device.TransceiverGetTelemetryResponse, error) {
+	req := &device.Request{
+		Request: &device.Request_TransceiverGetTelemetry{
+			TransceiverGetTelemetry: &device.TransceiverGetTelemetryRequest{},
+		},
+	}
+	resp, err := c.do(req)
+	if err != nil {
+		return nil, fmt.Errorf("do request: %w", err)
+	}
+	if resp.GetTransceiverGetTelemetry() == nil {
+		return nil, fmt.Errorf("no telemetry in response")
+	}
+	return resp.GetTransceiverGetTelemetry(), nil
+}
+
+func (c *Client) TransceiverStat() (*device.TransceiverGetStatusResponse, error) {
+	req := &device.Request{
+		Request: &device.Request_TransceiverGetStatus{
+			TransceiverGetStatus: &device.TransceiverGetStatusRequest{},
+		},
+	}
+	resp, err := c.do(req)
+	if err != nil {
+		return nil, fmt.Errorf("do request: %w", err)
+	}
+	if resp.GetTransceiverGetStatus() == nil {
+		return nil, fmt.Errorf("no telemetry in response")
+	}
+	return resp.GetTransceiverGetStatus(), nil
 }
 
 func (c *Client) do(req *device.Request) (*device.Response, error) {
