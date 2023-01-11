@@ -7,10 +7,13 @@ Package dishy provides an interface to manage a Starlink Dishy device over the n
 ## `dishy` command
 
 The `dishy` command controls a dishy device over the network.
+See the [command documentation][cmd].
 
 To install using the go tools:
 
 	go install olowe.co/dishy/cmd/dishy@latest
+
+[cmd]: https://godocs.io/olowe.co/dishy/cmd/dishy
 
 ## gRPC Code Generation
 

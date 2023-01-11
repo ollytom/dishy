@@ -32,7 +32,7 @@ func printStatus(client *dishy.Client) error {
 
 func main() {
 	log.SetFlags(0)
-	log.SetPrefix("dishy:")
+	log.SetPrefix("dishy: ")
 
 	flag.Parse()
 
