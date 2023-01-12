@@ -60,7 +60,7 @@ func main() {
 	case "metrics":
 		stat, err := client.Status()
 		if err != nil {
-			log.Fatal("read status: %v", err)
+			log.Fatalln("read status:", err)
 		}
 		err = dishy.WriteOpenMetrics(os.Stdout, stat)
 	}
